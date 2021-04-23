@@ -1,0 +1,19 @@
+1. User types https://clarity.dexcom.com into the browser
+-- client makes a GET request to https://clarity.dexcom.com 
+-- this returns the landing page itself, status code should be 200
+2. User presses the "Dexcom CLARITY for Home Users" button
+-- client makes a GET request to https://clarity.dexcom.com/users/auth/dexcom_sts
+-- this returns status code 302, which means a redirect. the client redirects to the url contained in 'Location' value in the response header
+---- the url is https://uam1.dexcom.com/identity/connect/authorize?client_id=DAEC20AC-9626-4B0E-94B5-B674E298F51E&prompt&redirect_uri=https%3A%2F%2Fclarity.dexcom.com%2Fusers%2Fauth%2Fdexcom_sts%2Fcallback&response_type=code&scope=openid+offline_access&state=6b02a0281d83d981d64dbd6a7817b3b556b1ea45180dfd55&ui_locales=en-US
+-- the client then makes another GET call to the above url, which is passing the parameters oauth2 needs on the backend to redirect the client to the login page
+---- this returns status code 302, which again redirects to the 'Location' url in the response header
+---- the client makes a GET call to https://uam1.dexcom.com/identity/login?signin=433c15dfac76e0b9c6b0b588300de02f
+---- finally, this third response returns the login page itself
+3. User enters username and password and presses the Login button
+-- client makes a POST call to the above /identity/login url, sending the credentials to the server
+-- this returns status code 302, again to the /identity/connect/authorize endpoint, with the necessary oauth2 parameters
+-- client makes a GET call to this endpoint and receives another code 302, but this time it's a redirect to the callback url, as required by oauth2 control flow
+-- client makes a GET call to https://clarity.dexcom.com/users/auth/dexcom_sts/callback?code=0724c24168024988a97bbdee61e16542&state=63209abf331ca6b1ac0c858b2e09c1ec04baeffad366d91a&session_state=7ZatHM3sjHiyGaxh9KqEyjQSWk3llJxRDnzL1RnCtUs.fb43b772f992722986b9410836455ab9
+-- finally, the new page is returned and the client is now in a logged-in state
+
+All of this information was found via use of the chrome network traffic monitor
